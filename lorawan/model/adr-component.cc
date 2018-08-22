@@ -59,8 +59,10 @@ namespace ns3 {
     NS_LOG_FUNCTION (this << status << networkStatus);
 
     Ptr<Packet> myPacket = status->GetLastPacketReceivedFromDevice()->Copy();
+    LoraMacHeader mHdr;
     LoraFrameHeader fHdr;
     fHdr.SetAsUplink();
+    myPacket->RemoveHeader(mHdr);
     myPacket->RemoveHeader(fHdr);
 
     //Execute the ADR algotithm only if the request bit is set
@@ -89,20 +91,21 @@ namespace ns3 {
                                        sizeof(int));
 
         //Repetitions Setting
-        const int rep = 1;
+        int rep = 1;
 
         NS_LOG_DEBUG ("Sending LinkAdrReq with DR = "<<newDataRate<<" and TP = "<<newTxPower<<" dB.\n");
 
+        status->m_reply.frameHeader.SetAsDownlink();
         status->m_reply.frameHeader.AddLinkAdrReq(newDataRate,
                                                   newTxPower,
                                                   enabledChannels,
                                                   rep);
-        status->m_reply.frameHeader.SetAsDownlink();
         status->m_reply.macHeader.SetMType(LoraMacHeader::UNCONFIRMED_DATA_DOWN);
       }
     }
     else
     {
+        NS_LOG_ERROR ("No LinkAdrReq found...");
         // Do nothing
     }
   }

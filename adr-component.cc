@@ -126,8 +126,8 @@ namespace ns3 {
       m_SNR = GetMaxSNR(status->GetReceivedPacketList(),
                         historyRange);
 
-      //Get the SF used by the device (by checking the SF used by the latest packet)
-      int spreadingFactor = status->GetLastReceivedPacketInfo().sf;
+      //Get the SF used by the device
+      int spreadingFactor = status->GetFirstReceiveWindowSpreadingFactor();
 
       //Get the device data rate and use it to get the SNR demodulation treshold
       double req_SNR = treshold[SfToDr(spreadingFactor)];

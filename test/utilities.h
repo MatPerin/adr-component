@@ -43,6 +43,9 @@ namespace ns3 {
   NodeContainer CreateGateways (int nGateways, MobilityHelper mobility,
                                 Ptr<LoraChannel> channel);
 
+  Ptr<Node> CreateNetworkServer (NodeContainer endDevices,
+                                 NodeContainer gateways);
+
   template <typename T>
   Ptr<T>
   GetMacLayerFromNode (Ptr<Node> n)

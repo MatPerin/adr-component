@@ -39,9 +39,9 @@ int main (int argc, char *argv[])
   // Logging
   //////////
 
-  LogComponentEnable ("NetworkServerExample", LOG_LEVEL_ALL);
-  LogComponentEnable ("SimpleNetworkServer", LOG_LEVEL_ALL);
-  LogComponentEnable ("GatewayLoraMac", LOG_LEVEL_ALL);
+  LogComponentEnable ("NetworkServerExample", LOG_LEVEL_DEBUG);
+  LogComponentEnable ("SimpleNetworkServer", LOG_LEVEL_DEBUG);
+  LogComponentEnable ("GatewayLoraMac", LOG_LEVEL_DEBUG);
   // LogComponentEnable("LoraFrameHeader", LOG_LEVEL_ALL);
   // LogComponentEnable("LoraMacHeader", LOG_LEVEL_ALL);
   // LogComponentEnable("MacCommand", LOG_LEVEL_ALL);
@@ -50,12 +50,12 @@ int main (int argc, char *argv[])
   // LogComponentEnable("LoraChannel", LOG_LEVEL_ALL);
   // LogComponentEnable("EndDeviceLoraPhy", LOG_LEVEL_ALL);
   // LogComponentEnable("LogicalLoraChannelHelper", LOG_LEVEL_ALL);
-  LogComponentEnable ("EndDeviceLoraMac", LOG_LEVEL_ALL);
+  LogComponentEnable ("EndDeviceLoraMac", LOG_LEVEL_DEBUG);
   // LogComponentEnable ("OneShotSender", LOG_LEVEL_ALL);
   // LogComponentEnable("PointToPointNetDevice", LOG_LEVEL_ALL);
   // LogComponentEnable ("Forwarder", LOG_LEVEL_ALL);
   // LogComponentEnable ("OneShotSender", LOG_LEVEL_ALL);
-  // LogComponentEnable ("DeviceStatus", LOG_LEVEL_ALL);
+  LogComponentEnable ("DeviceStatus", LOG_LEVEL_DEBUG);
   // LogComponentEnable ("GatewayStatus", LOG_LEVEL_ALL);
   LogComponentEnableAll (LOG_PREFIX_FUNC);
   LogComponentEnableAll (LOG_PREFIX_NODE);

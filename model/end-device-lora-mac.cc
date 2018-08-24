@@ -968,6 +968,14 @@ EndDeviceLoraMac::GetDataRate (void)
   return m_dataRate;
 }
 
+uint8_t
+EndDeviceLoraMac::GetTransmissionPower (void)
+{
+  NS_LOG_FUNCTION (this);
+
+  return m_txPower;
+}
+
 void
 EndDeviceLoraMac::SetDeviceAddress (LoraDeviceAddress address)
 {

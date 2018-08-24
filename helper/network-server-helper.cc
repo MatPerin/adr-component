@@ -20,6 +20,7 @@
 
 #include "ns3/network-server-helper.h"
 #include "ns3/network-controller-components.h"
+#include "ns3/adr-component.h"
 #include "ns3/double.h"
 #include "ns3/string.h"
 #include "ns3/trace-source-accessor.h"
@@ -131,5 +132,9 @@ namespace ns3 {
     // Add LinkCheck support
     Ptr<LinkCheckComponent> linkCheckSupport = Create<LinkCheckComponent> ();
     netServer->AddComponent (linkCheckSupport);
+
+    //Add LinkAdrReq support
+    //Ptr<AdrComponent> adrComponentSupport = Create<AdrComponent> ();
+    //netServer->AddComponent (adrComponentSupport);
   }
 } // namespace ns3

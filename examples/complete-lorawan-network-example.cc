@@ -4,6 +4,9 @@
  * network.
  */
 
+#include "ns3/network-server-helper.h"
+#include "ns3/forwarder-helper.h"
+#include "ns3/utilities.h"
 #include "ns3/end-device-lora-phy.h"
 #include "ns3/gateway-lora-phy.h"
 #include "ns3/end-device-lora-mac.h"
@@ -296,6 +299,12 @@ int main (int argc, char *argv[])
   // Create the LoraHelper
   LoraHelper helper = LoraHelper ();
 
+  //Create the NetworkServerHelper
+  NetworkServerHelper nsHelper = NetworkServerHelper ();
+
+  //Create the ForwarderHelper
+  ForwarderHelper forHelper = ForwarderHelper ();
+
   /************************
   *  Create End Devices  *
   ************************/
@@ -355,6 +364,9 @@ int main (int argc, char *argv[])
   macHelper.SetDeviceType (LoraMacHelper::GW);
   helper.Install (phyHelper, macHelper, gateways);
 
+  //Create a forwarder for each gateway
+  forHelper.Install(gateways);
+
   /************************
   *  Configure Gateways  *
   ************************/
@@ -412,6 +424,16 @@ int main (int argc, char *argv[])
       PrintEndDevices (endDevices, gateways,
                        "src/lorawan/examples/endDevices.dat");
     }
+
+  /**************************
+  *  Create Network Server  *
+  ***************************/
+
+  // Create the NS node
+  Ptr<Node> networkServer = CreateNetworkServer (endDevices, gateways);
+
+  // Create a NS for the network
+  nsHelper.Install (networkServer);
 
   /****************
   *  Simulation  *

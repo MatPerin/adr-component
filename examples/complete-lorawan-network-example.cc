@@ -364,15 +364,13 @@ int main (int argc, char *argv[])
   macHelper.SetDeviceType (LoraMacHelper::GW);
   helper.Install (phyHelper, macHelper, gateways);
 
-  //Create a forwarder for each gateway
-  forHelper.Install(gateways);
 
-  /************************
-  *  Configure Gateways  *
-  ************************/
+/************************
+ *  Configure Gateways  *
+ ************************/
 
-  // Install reception paths on gateways
-  for (NodeContainer::Iterator j = gateways.Begin (); j != gateways.End (); j++)
+// Install reception paths on gateways
+for (NodeContainer::Iterator j = gateways.Begin (); j != gateways.End (); j++)
     {
 
       Ptr<Node> object = *j;
@@ -430,13 +428,19 @@ int main (int argc, char *argv[])
   ***************************/
 
   // Create the NS node
-  Ptr<Node> networkServer = CreateNetworkServer (endDevices, gateways);
+  NodeContainer networkServer;
+  networkServer.Create (1);
 
   // Create a NS for the network
+  nsHelper.SetEndDevices (endDevices);
+  nsHelper.SetGateways (gateways);
   nsHelper.Install (networkServer);
 
+  //Create a forwarder for each gateway
+  forHelper.Install(gateways);
+
   /****************
-  *  Simulation  *
+   *  Simulation  *
   ****************/
 
   Simulator::Stop (appStopTime + Hours (2));

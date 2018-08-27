@@ -67,15 +67,15 @@ namespace ns3 {
     if(fHdr.GetAdr())
     {
       if(status->GetReceivedPacketList().size() < historyRange)
-        NS_LOG_DEBUG ("Not enough packets received by this device for the algorithm to work!\n");
+        NS_LOG_DEBUG ("Not enough packets received by this device for the algorithm to work");
       else
       {
         //The device request an ADR tuning, so it is going to require answering
         status->m_reply.needsReply = true;
 
         //New parameters for the end-device
-        int newDataRate;
-        int newTxPower;
+        uint8_t newDataRate;
+        uint8_t newTxPower;
 
         //ADR Algorithm
         AdrImplementation(&newDataRate,
@@ -91,10 +91,10 @@ namespace ns3 {
         //Repetitions Setting
         const int rep = 1;
 
-        NS_LOG_DEBUG ("Sending LinkAdrReq with DR = "<<newDataRate<<" and TP = "<<newTxPower<<" dB.\n");
+        NS_LOG_DEBUG ("Sending LinkAdrReq with DR = "<<unsigned(newDataRate)<<" and TP = "<<unsigned(newTxPower)<<" dBm");
 
         status->m_reply.frameHeader.AddLinkAdrReq(newDataRate,
-                                                  newTxPower,
+                                                  GetTxPowerIndex(newTxPower),
                                                   enabledChannels,
                                                   rep);
         status->m_reply.frameHeader.SetAsDownlink();
@@ -113,9 +113,9 @@ namespace ns3 {
     NS_LOG_FUNCTION (this->GetTypeId() << networkStatus);
   }
 
-  void AdrComponent::AdrImplementation(int *newDataRate,
-                         int *newTxPower,
-                         Ptr<EndDeviceStatus> status)
+  void AdrComponent::AdrImplementation(uint8_t *newDataRate,
+                                       uint8_t *newTxPower,
+                                       Ptr<EndDeviceStatus> status)
   {
     //Compute the maximum or median SNR, based on the boolean value historyAveraging
     double m_SNR;
@@ -159,12 +159,12 @@ namespace ns3 {
       }
       while(steps > 0 && transmissionPower > min_transmissionPower)
       {
-        transmissionPower -= 3;
+        transmissionPower -= 2;
         steps--;
       }
       while(steps < 0 && transmissionPower < max_transmissionPower)
       {
-        transmissionPower += 3;
+        transmissionPower += 2;
         steps++;
       }
 
@@ -172,23 +172,24 @@ namespace ns3 {
       *newTxPower = transmissionPower;
   }
 
-  int AdrComponent::SfToDr(int sf)
+  uint8_t AdrComponent::SfToDr(uint8_t sf)
   {
     return sf - 7;
   }
 
   double AdrComponent::TxPowerToSNR (double transmissionPower)
   {
-  //The following conversion ignores interfering packets
+    //The following conversion ignores interfering packets
     return transmissionPower + 174 - 10 * log10(B) - NF;
   }
 
   //Get the maximum received power (it considers the values in dB!)
   double AdrComponent::GetMaxTxFromGateways (EndDeviceStatus::GatewayList gwList)
   {
-    double max = min_transmissionPower;
+    EndDeviceStatus::GatewayList::iterator it = gwList.begin();
+    double max = it->second.rxPower;
 
-    for(EndDeviceStatus::GatewayList::iterator it = gwList.begin(); it != gwList.end(); it++)
+    for(; it != gwList.end(); it++)
     {
       if(it->second.rxPower > max)
         max = it->second.rxPower;
@@ -215,17 +216,18 @@ namespace ns3 {
     if(tpAveraging)
       return GetAverageTxFromGateways(gwList);
     else
-      return TxPowerToSNR(GetMaxTxFromGateways(gwList));
+      return GetMaxTxFromGateways(gwList);
   }
 
   double AdrComponent::GetMaxSNR (EndDeviceStatus::ReceivedPacketList packetList,
                                   int historyRange)
   {
-    double max = TxPowerToSNR(min_transmissionPower);
     double m_SNR;
 
     //Take elements from the list starting at the end
     auto it = packetList.rbegin();
+    double max = TxPowerToSNR(GetReceivedPower(it->second.gwList));
+    
     for(int i = 0; i < historyRange; i++, it++)
     {
       m_SNR = TxPowerToSNR(GetReceivedPower(it->second.gwList));

@@ -114,8 +114,8 @@ namespace ns3 {
   }
 
   void AdrComponent::AdrImplementation(uint8_t *newDataRate,
-                                       uint8_t *newTxPower,
-                                       Ptr<EndDeviceStatus> status)
+                         uint8_t *newTxPower,
+                         Ptr<EndDeviceStatus> status)
   {
     //Compute the maximum or median SNR, based on the boolean value historyAveraging
     double m_SNR;
@@ -126,50 +126,50 @@ namespace ns3 {
       m_SNR = GetMaxSNR(status->GetReceivedPacketList(),
                         historyRange);
 
-      //Get the SF used by the device
-      int spreadingFactor = status->GetFirstReceiveWindowSpreadingFactor();
+    //Get the SF used by the device
+    uint8_t spreadingFactor = status->GetFirstReceiveWindowSpreadingFactor();
 
-      //Get the device data rate and use it to get the SNR demodulation treshold
-      double req_SNR = treshold[SfToDr(spreadingFactor)];
+    //Get the device data rate and use it to get the SNR demodulation treshold
+    double req_SNR = treshold[SfToDr(spreadingFactor)];
 
-      //Get the device transmission power (dB)
-      double transmissionPower = status->GetMac()->GetTransmissionPower();
+    //Get the device transmission power (dBm)
+    double transmissionPower = status->GetMac()->GetTransmissionPower();
 
-      //Compute the SNR margin taking into consideration the SNR of
-      //previously received packets
-      double margin_SNR = m_SNR - req_SNR - offset;
+    //Compute the SNR margin taking into consideration the SNR of
+    //previously received packets
+    double margin_SNR = m_SNR - req_SNR - offset;
 
-      //Number of steps to decrement the SF (thereby increasing the Data Rate)
-      //and the TP.
-      int steps = std::floor(margin_SNR / 3);
+    //Number of steps to decrement the SF (thereby increasing the Data Rate)
+    //and the TP.
+    int steps = std::floor(margin_SNR / 3);
 
-      //If the number of steps is positive (margin_SNR is positive, so its
-      //decimal value is high) increment the data rate, if there are some
-      //leftover steps after reaching the maximum possible data rate
-      //(corresponding to the minimum SF) decrement the transmission power as
-      //well for the number of steps left.
-      //If, on the other hand, the number of steps is negative (margin_SNR is
-      //negative, so its decimal value is low) increase the transmission power
-      //(note that the SF is not incremented as this particular algorithm
-      //expects the node itself to raise its SF whenever necessary).
-      while(steps > 0 && spreadingFactor > min_spreadingFactor)
-      {
-        spreadingFactor--;
-        steps--;
-      }
-      while(steps > 0 && transmissionPower > min_transmissionPower)
-      {
-        transmissionPower -= 2;
-        steps--;
-      }
-      while(steps < 0 && transmissionPower < max_transmissionPower)
-      {
-        transmissionPower += 2;
-        steps++;
-      }
+    //If the number of steps is positive (margin_SNR is positive, so its
+    //decimal value is high) increment the data rate, if there are some
+    //leftover steps after reaching the maximum possible data rate
+    //(corresponding to the minimum SF) decrement the transmission power as
+    //well for the number of steps left.
+    //If, on the other hand, the number of steps is negative (margin_SNR is
+    //negative, so its decimal value is low) increase the transmission power
+    //(note that the SF is not incremented as this particular algorithm
+    //expects the node itself to raise its SF whenever necessary).
+    while(steps > 0 && spreadingFactor > min_spreadingFactor)
+    {
+      spreadingFactor--;
+      steps--;
+    }
+    while(steps > 0 && transmissionPower > min_transmissionPower)
+    {
+      transmissionPower -= 2;
+      steps--;
+    }
+    while(steps < 0 && transmissionPower < max_transmissionPower)
+    {
+      transmissionPower += 2;
+      steps++;
+    }
 
-      *newDataRate = SfToDr(spreadingFactor);
-      *newTxPower = transmissionPower;
+    *newDataRate = SfToDr(spreadingFactor);
+    *newTxPower = transmissionPower;
   }
 
   uint8_t AdrComponent::SfToDr(uint8_t sf)
@@ -220,14 +220,14 @@ namespace ns3 {
   }
 
   double AdrComponent::GetMaxSNR (EndDeviceStatus::ReceivedPacketList packetList,
-                                  int historyRange)
+                                  uint8_t historyRange)
   {
     double m_SNR;
 
     //Take elements from the list starting at the end
     auto it = packetList.rbegin();
     double max = TxPowerToSNR(GetReceivedPower(it->second.gwList));
-    
+
     for(int i = 0; i < historyRange; i++, it++)
     {
       m_SNR = TxPowerToSNR(GetReceivedPower(it->second.gwList));
@@ -240,12 +240,12 @@ namespace ns3 {
   }
 
   double AdrComponent::GetAverageSNR (EndDeviceStatus::ReceivedPacketList packetList,
-                                      int historyRange)
+                                      uint8_t historyRange)
   {
     double sum = 0;
     double m_SNR;
 
-  //Take elements from the list starting at the end
+    //Take elements from the list starting at the end
     auto it = packetList.rbegin();
     for(int i = 0; i < historyRange; i++, it++)
     {
@@ -256,7 +256,7 @@ namespace ns3 {
 
     return m_SNR / historyRange;
   }
-  
+
   int AdrComponent::GetTxPowerIndex (int txPower)
   {
     if(txPower >= 16)

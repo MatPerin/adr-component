@@ -344,6 +344,8 @@ LinkAdrReq::GetDataRate (void)
 {
   NS_LOG_FUNCTION (this);
 
+  NS_LOG_DEBUG ("DR = " << unsigned(m_dataRate));
+
   return m_dataRate;
 }
 

@@ -134,7 +134,7 @@ namespace ns3 {
     netServer->AddComponent (linkCheckSupport);
 
     //Add LinkAdrReq support
-    //Ptr<AdrComponent> adrComponentSupport = Create<AdrComponent> ();
-    //netServer->AddComponent (adrComponentSupport);
+    Ptr<AdrComponent> adrComponentSupport = Create<AdrComponent> ();
+    netServer->AddComponent (adrComponentSupport);
   }
 } // namespace ns3

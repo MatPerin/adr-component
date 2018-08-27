@@ -56,11 +56,11 @@ namespace ns3 {
 
     private:
 
-      void AdrImplementation(int *newDataRate,
-                             int *newTxPower,
+      void AdrImplementation(uint8_t *newDataRate,
+                             uint8_t *newTxPower,
                              Ptr<EndDeviceStatus> status);
 
-      int SfToDr (int sf);
+      uint8_t SfToDr (uint8_t sf);
 
       double TxPowerToSNR (double transmissionPower);
 
@@ -71,15 +71,17 @@ namespace ns3 {
       double GetReceivedPower (EndDeviceStatus::GatewayList gwList);
 
       double GetMaxSNR (EndDeviceStatus::ReceivedPacketList packetList,
-                        int historyRange);
+                        uint8_t historyRange);
 
       double GetAverageSNR (EndDeviceStatus::ReceivedPacketList packetList,
-                            int historyRange);
+                            uint8_t historyRange);
+
+      int GetTxPowerIndex (int txPower);
 
       //TX power from gateways policy:
       //0 - max TX power between all connected GW
       //1 - average TX power considering all connected GW
-      const bool tpAveraging = 0;
+      const bool tpAveraging = 1;
 
       //Number of previous packets to consider
       const uint8_t historyRange = 20;
@@ -87,7 +89,7 @@ namespace ns3 {
       //Received SNR history policy:
       //0 - max SNR between the latest historyRange packets
       //1 - average SNR between the latest historyRange packets
-      const bool historyAveraging = 0;
+      const bool historyAveraging = 1;
 
       //SF lower limit
       const int min_spreadingFactor = 7;
@@ -96,7 +98,7 @@ namespace ns3 {
       const int min_transmissionPower = 2;
 
       //Maximum transmission power (dBm) (Europe)
-      const int max_transmissionPower = 14;
+      const int max_transmissionPower = 16;
 
       //Device specific SNR margin (dB)
       const int offset = 10;
@@ -110,6 +112,8 @@ namespace ns3 {
       //Vector containing the required SNR for the 6 allowed SF levels
       //ranging from 7 to 12 (the SNR values are in dB).
       double treshold[6] = {-20.0, -17.5, -15.0, -12.5, -10.0, -7.5};
+
+      int counter = 0;
 };
 }
 

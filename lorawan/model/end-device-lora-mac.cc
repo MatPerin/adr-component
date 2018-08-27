@@ -1008,6 +1008,8 @@ EndDeviceLoraMac::OnLinkAdrReq (uint8_t dataRate, uint8_t txPower,
   NS_LOG_FUNCTION (this << unsigned (dataRate) << unsigned (txPower) <<
                    repetitions);
 
+  NS_LOG_DEBUG ("Detected LinkAdrReq Command with: DR = " << (unsigned)dataRate << " and txPower = " << (unsigned)txPower);
+
   // Three bools for three requirements before setting things up
   bool channelMaskOk = true;
   bool dataRateOk = true;

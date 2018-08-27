@@ -59,25 +59,27 @@ namespace ns3 {
     NS_LOG_FUNCTION (this << status << networkStatus);
 
     Ptr<Packet> myPacket = status->GetLastPacketReceivedFromDevice()->Copy();
-    LoraMacHeader mHdr;
     LoraFrameHeader fHdr;
     fHdr.SetAsUplink();
-    myPacket->RemoveHeader(mHdr);
     myPacket->RemoveHeader(fHdr);
 
     //Execute the ADR algotithm only if the request bit is set
-    if(fHdr.GetAdr())
+    if(fHdr.GetAdr() || counter >= 20)
     {
+      counter = 0;
+
       if(status->GetReceivedPacketList().size() < historyRange)
-        NS_LOG_DEBUG ("Not enough packets received by this device for the algorithm to work!\n");
+        NS_LOG_DEBUG ("Not enough packets received by this device for the algorithm to work");
       else
       {
+        NS_LOG_DEBUG("New ADR request");
+
         //The device request an ADR tuning, so it is going to require answering
         status->m_reply.needsReply = true;
 
         //New parameters for the end-device
-        int newDataRate;
-        int newTxPower;
+        uint8_t newDataRate;
+        uint8_t newTxPower;
 
         //ADR Algorithm
         AdrImplementation(&newDataRate,
@@ -91,22 +93,22 @@ namespace ns3 {
                                        sizeof(int));
 
         //Repetitions Setting
-        int rep = 1;
+        const int rep = 1;
 
-        NS_LOG_DEBUG ("Sending LinkAdrReq with DR = "<<newDataRate<<" and TP = "<<newTxPower<<" dB.\n");
+        NS_LOG_DEBUG ("Sending LinkAdrReq with DR = "<<(unsigned)newDataRate<<" and TP = "<<(unsigned)newTxPower<<" dBm");
 
-        status->m_reply.frameHeader.SetAsDownlink();
         status->m_reply.frameHeader.AddLinkAdrReq(newDataRate,
-                                                  newTxPower,
+                                                  GetTxPowerIndex(newTxPower),
                                                   enabledChannels,
                                                   rep);
+        status->m_reply.frameHeader.SetAsDownlink();
         status->m_reply.macHeader.SetMType(LoraMacHeader::UNCONFIRMED_DATA_DOWN);
       }
     }
     else
     {
-        NS_LOG_ERROR ("No LinkAdrReq found...");
         // Do nothing
+        counter++;
     }
   }
 
@@ -116,8 +118,8 @@ namespace ns3 {
     NS_LOG_FUNCTION (this->GetTypeId() << networkStatus);
   }
 
-  void AdrComponent::AdrImplementation(int *newDataRate,
-                         int *newTxPower,
+  void AdrComponent::AdrImplementation(uint8_t *newDataRate,
+                         uint8_t *newTxPower,
                          Ptr<EndDeviceStatus> status)
   {
     //Compute the maximum or median SNR, based on the boolean value historyAveraging
@@ -129,69 +131,85 @@ namespace ns3 {
       m_SNR = GetMaxSNR(status->GetReceivedPacketList(),
                         historyRange);
 
-      //Get the SF used by the device (by checking the SF used by the latest packet)
-      int spreadingFactor = status->GetLastReceivedPacketInfo().sf;
+    NS_LOG_DEBUG ("m_SNR = " << m_SNR);
 
-      //Get the device data rate and use it to get the SNR demodulation treshold
-      double req_SNR = treshold[SfToDr(spreadingFactor)];
+    //Get the SF used by the device
+    uint8_t spreadingFactor = status->GetFirstReceiveWindowSpreadingFactor();
 
-      //Get the device transmission power (dB)
-      double transmissionPower = status->GetMac()->GetTransmissionPower();
+    NS_LOG_DEBUG ("SF = " << (unsigned)spreadingFactor);
 
-      //Compute the SNR margin taking into consideration the SNR of
-      //previously received packets
-      double margin_SNR = m_SNR - req_SNR - offset;
+    //Get the device data rate and use it to get the SNR demodulation treshold
+    double req_SNR = treshold[SfToDr(spreadingFactor)];
 
-      //Number of steps to decrement the SF (thereby increasing the Data Rate)
-      //and the TP.
-      int steps = std::floor(margin_SNR / 3);
+    NS_LOG_DEBUG ("Required SNR = " << req_SNR);
 
-      //If the number of steps is positive (margin_SNR is positive, so its
-      //decimal value is high) increment the data rate, if there are some
-      //leftover steps after reaching the maximum possible data rate
-      //(corresponding to the minimum SF) decrement the transmission power as
-      //well for the number of steps left.
-      //If, on the other hand, the number of steps is negative (margin_SNR is
-      //negative, so its decimal value is low) increase the transmission power
-      //(note that the SF is not incremented as this particular algorithm
-      //expects the node itself to raise its SF whenever necessary).
-      while(steps > 0 && spreadingFactor > min_spreadingFactor)
-      {
-        spreadingFactor--;
-        steps--;
-      }
-      while(steps > 0 && transmissionPower > min_transmissionPower)
-      {
-        transmissionPower -= 3;
-        steps--;
-      }
-      while(steps < 0 && transmissionPower < max_transmissionPower)
-      {
-        transmissionPower += 3;
-        steps++;
-      }
+    //Get the device transmission power (dBm)
+    double transmissionPower = status->GetMac()->GetTransmissionPower();
 
-      *newDataRate = SfToDr(spreadingFactor);
-      *newTxPower = transmissionPower;
+    NS_LOG_DEBUG ("Transmission Power = " << transmissionPower);
+
+    //Compute the SNR margin taking into consideration the SNR of
+    //previously received packets
+    double margin_SNR = m_SNR - req_SNR - offset;
+
+    NS_LOG_DEBUG ("Margin = " << margin_SNR);
+
+    //Number of steps to decrement the SF (thereby increasing the Data Rate)
+    //and the TP.
+    int steps = std::floor(margin_SNR / 3);
+
+    NS_LOG_DEBUG ("steps = " << steps);
+
+    //If the number of steps is positive (margin_SNR is positive, so its
+    //decimal value is high) increment the data rate, if there are some
+    //leftover steps after reaching the maximum possible data rate
+    //(corresponding to the minimum SF) decrement the transmission power as
+    //well for the number of steps left.
+    //If, on the other hand, the number of steps is negative (margin_SNR is
+    //negative, so its decimal value is low) increase the transmission power
+    //(note that the SF is not incremented as this particular algorithm
+    //expects the node itself to raise its SF whenever necessary).
+    while(steps > 0 && spreadingFactor > min_spreadingFactor)
+    {
+      spreadingFactor--;
+      steps--;
+      NS_LOG_DEBUG ("Decreased SF by 1");
+    }
+    while(steps > 0 && transmissionPower > min_transmissionPower)
+    {
+      transmissionPower -= 2;
+      steps--;
+      NS_LOG_DEBUG ("Decreased Ptx by 2");
+    }
+    while(steps < 0 && transmissionPower < max_transmissionPower)
+    {
+      transmissionPower += 2;
+      steps++;
+      NS_LOG_DEBUG ("Increased Ptx by 2");
+    }
+
+    *newDataRate = SfToDr(spreadingFactor);
+    *newTxPower = transmissionPower;
   }
 
-  int AdrComponent::SfToDr(int sf)
+  uint8_t AdrComponent::SfToDr(uint8_t sf)
   {
     return sf - 7;
   }
 
   double AdrComponent::TxPowerToSNR (double transmissionPower)
   {
-  //The following conversion ignores interfering packets
+    //The following conversion ignores interfering packets
     return transmissionPower + 174 - 10 * log10(B) - NF;
   }
 
   //Get the maximum received power (it considers the values in dB!)
   double AdrComponent::GetMaxTxFromGateways (EndDeviceStatus::GatewayList gwList)
   {
-    double max = min_transmissionPower;
+    EndDeviceStatus::GatewayList::iterator it = gwList.begin();
+    double max = it->second.rxPower;
 
-    for(EndDeviceStatus::GatewayList::iterator it = gwList.begin(); it != gwList.end(); it++)
+    for(; it != gwList.end(); it++)
     {
       if(it->second.rxPower > max)
         max = it->second.rxPower;
@@ -210,7 +228,9 @@ namespace ns3 {
       sum += it->second.rxPower;
     }
 
-    return sum / gwList.size();
+    double average = sum / gwList.size();
+
+    return average;
   }
 
   double AdrComponent::GetReceivedPower (EndDeviceStatus::GatewayList gwList)
@@ -218,17 +238,18 @@ namespace ns3 {
     if(tpAveraging)
       return GetAverageTxFromGateways(gwList);
     else
-      return TxPowerToSNR(GetMaxTxFromGateways(gwList));
+      return GetMaxTxFromGateways(gwList);
   }
 
   double AdrComponent::GetMaxSNR (EndDeviceStatus::ReceivedPacketList packetList,
-                                  int historyRange)
+                                  uint8_t historyRange)
   {
-    double max = TxPowerToSNR(min_transmissionPower);
     double m_SNR;
 
     //Take elements from the list starting at the end
     auto it = packetList.rbegin();
+    double max = TxPowerToSNR(GetReceivedPower(it->second.gwList));
+
     for(int i = 0; i < historyRange; i++, it++)
     {
       m_SNR = TxPowerToSNR(GetReceivedPower(it->second.gwList));
@@ -237,11 +258,13 @@ namespace ns3 {
         max = m_SNR;
     }
 
+    NS_LOG_DEBUG ("SNR (max) = " << max);
+
     return max;
   }
 
   double AdrComponent::GetAverageSNR (EndDeviceStatus::ReceivedPacketList packetList,
-                                      int historyRange)
+                                      uint8_t historyRange)
   {
     double sum = 0;
     double m_SNR;
@@ -255,6 +278,30 @@ namespace ns3 {
       sum += m_SNR;
     }
 
-    return m_SNR / historyRange;
+    double average = m_SNR / historyRange;
+
+    NS_LOG_DEBUG ("SNR (average) = " << average);
+
+    return average;
+  }
+
+  int AdrComponent::GetTxPowerIndex (int txPower)
+  {
+    if(txPower >= 16)
+      return 0;
+    else if(txPower >= 14)
+      return 1;
+    else if(txPower >= 12)
+      return 2;
+    else if(txPower >= 10)
+      return 3;
+    else if(txPower >= 8)
+      return 4;
+    else if(txPower >= 6)
+      return 5;
+    else if(txPower >= 4)
+      return 6;
+    else
+      return 7;
   }
 }

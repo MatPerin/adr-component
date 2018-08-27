@@ -254,4 +254,24 @@ namespace ns3 {
 
     return m_SNR / historyRange;
   }
+  
+  int AdrComponent::GetTxPowerIndex (int txPower)
+  {
+    if(txPower >= 16)
+      return 0;
+    else if(txPower >= 14)
+      return 1;
+    else if(txPower >= 12)
+      return 2;
+    else if(txPower >= 10)
+      return 3;
+    else if(txPower >= 8)
+      return 4;
+    else if(txPower >= 6)
+      return 5;
+    else if(txPower >= 4)
+      return 6;
+    else
+      return 7;
+  }
 }

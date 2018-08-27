@@ -60,7 +60,7 @@ namespace ns3 {
                              int *newTxPower,
                              Ptr<EndDeviceStatus> status);
 
-      int SfToDr (int sf);
+      uint8_t SfToDr (uint8_t sf);
 
       double TxPowerToSNR (double transmissionPower);
 
@@ -71,10 +71,12 @@ namespace ns3 {
       double GetReceivedPower (EndDeviceStatus::GatewayList gwList);
 
       double GetMaxSNR (EndDeviceStatus::ReceivedPacketList packetList,
-                        int historyRange);
+                        uint8_t historyRange);
 
       double GetAverageSNR (EndDeviceStatus::ReceivedPacketList packetList,
-                            int historyRange);
+                            uint8_t historyRange);
+                            
+      int GetTxPowerIndex (int txPower);
 
       //TX power from gateways policy:
       //0 - max TX power between all connected GW
@@ -82,7 +84,7 @@ namespace ns3 {
       const bool tpAveraging = 0;
 
       //Number of previous packets to consider
-      const uint8_t historyRange = 20;
+      const uint_8 historyRange = 20;
 
       //Received SNR history policy:
       //0 - max SNR between the latest historyRange packets

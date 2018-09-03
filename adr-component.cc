@@ -58,9 +58,11 @@ namespace ns3 {
   {
     NS_LOG_FUNCTION (this << status << networkStatus);
 
-    Ptr<Packet> myPacket = status->GetLastPacketReceivedFromDevice()->Copy();
+    Ptr<Packet> myPacket = status->GetLastPacketReceivedFromDevice ()->Copy();
+    LoraMacHeader mHdr;
     LoraFrameHeader fHdr;
-    fHdr.SetAsUplink();
+    fHdr.SetAsUplink ();
+    myPacket->RemoveHeader(mHdr);
     myPacket->RemoveHeader(fHdr);
 
     //Execute the ADR algotithm only if the request bit is set

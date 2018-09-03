@@ -598,7 +598,7 @@ EndDeviceLoraMac::ApplyNecessaryOptions (LoraFrameHeader& frameHeader)
   frameHeader.SetAsUplink ();
   frameHeader.SetFPort (1);           // TODO Use an appropriate frame port based on the application
   frameHeader.SetAddress (m_address);
-  frameHeader.SetAdr (0);           // TODO Set ADR if a member variable is true
+  frameHeader.SetAdr (1);           // TODO Set ADR if a member variable is true
   frameHeader.SetAdrAckReq (0);           // TODO Set ADRACKREQ if a member variable is true
   if (m_mType == LoraMacHeader::CONFIRMED_DATA_UP)
     {

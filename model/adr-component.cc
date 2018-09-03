@@ -66,10 +66,8 @@ namespace ns3 {
     myPacket->RemoveHeader(fHdr);
     
     //Execute the ADR algotithm only if the request bit is set
-    if(fHdr.GetAdr() || counter >= 20)
+    if(fHdr.GetAdr())
     {
-      counter = 0;
-
       if(status->GetReceivedPacketList().size() < historyRange)
         NS_LOG_DEBUG ("Not enough packets received by this device for the algorithm to work");
       else
@@ -110,7 +108,6 @@ namespace ns3 {
     else
     {
         // Do nothing
-        counter++;
     }
   }
 

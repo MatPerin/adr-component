@@ -112,8 +112,6 @@ namespace ns3 {
       //Vector containing the required SNR for the 6 allowed SF levels
       //ranging from 7 to 12 (the SNR values are in dB).
       double treshold[6] = {-20.0, -17.5, -15.0, -12.5, -10.0, -7.5};
-
-      int counter = 0;
 };
 }
 

@@ -194,7 +194,27 @@ namespace ns3 {
 
   uint8_t AdrComponent::SfToDr(uint8_t sf)
   {
-    return sf - 7;
+    switch (sf)
+    {
+      case 12:
+        return 0;
+        break;
+      case 11:
+        return 1;
+        break;
+      case 10:
+        return 2;
+        break;
+      case 9:
+        return 3;
+        break;
+      case 8:
+        return 4;
+        break;
+      default:
+        return 5;
+        break;
+    }
   }
 
   double AdrComponent::TxPowerToSNR (double transmissionPower)

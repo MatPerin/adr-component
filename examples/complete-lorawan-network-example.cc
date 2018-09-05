@@ -36,7 +36,7 @@ int gatewayRings = 1;
 int nGateways = 3 * gatewayRings * gatewayRings - 3 * gatewayRings + 1;
 double radius = 7500;
 double gatewayRadius = 7500 / ((gatewayRings - 1) * 2 + 1);
-double simulationTime = 600;
+double simulationTime = 600000;
 int appPeriodSeconds = 600;
 std::vector<int> sfQuantity (6);
 
@@ -396,7 +396,7 @@ for (NodeContainer::Iterator j = gateways.Begin (); j != gateways.End (); j++)
   *  Set up the end device's spreading factor  *
   **********************************************/
 
-  sfQuantity = macHelper.SetSpreadingFactorsUp (endDevices, gateways, channel);
+  //sfQuantity = macHelper.SetSpreadingFactorsUp (endDevices, gateways, channel);
 
   NS_LOG_DEBUG ("Completed configuration");
 

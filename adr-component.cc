@@ -74,6 +74,12 @@ namespace ns3 {
       {
         //The device request an ADR tuning, so it is going to require answering
         status->m_reply.needsReply = true;
+        
+        //Get the SF used by the device
+        uint8_t spreadingFactor = status->GetFirstReceiveWindowSpreadingFactor();
+
+        //Get the device transmission power (dBm)
+        uint8_t transmissionPower = status->GetMac()->GetTransmissionPower();
 
         //New parameters for the end-device
         uint8_t newDataRate;
@@ -84,23 +90,30 @@ namespace ns3 {
                           &newTxPower,
                           status);
 
-        //Create a list with mandatory channel indexes
-        int channels[] = {1, 2, 3};
-        std::list<int> enabledChannels(channels,
-                                       channels + sizeof(channels) /
-                                       sizeof(int));
+        if(newDataRate != SfToDr(spreadingFactor) || newTxPower != transmissionPower)
+        {
+          //Create a list with mandatory channel indexes
+          int channels[] = {1, 2, 3};
+          std::list<int> enabledChannels(channels,
+                                         channels + sizeof(channels) /
+                                         sizeof(int));
 
-        //Repetitions Setting
-        const int rep = 1;
+          //Repetitions Setting
+          const int rep = 1;
 
-        NS_LOG_DEBUG ("Sending LinkAdrReq with DR = "<<unsigned(newDataRate)<<" and TP = "<<unsigned(newTxPower)<<" dBm");
+          NS_LOG_ERROR ("Sending LinkAdrReq with DR = "<<(unsigned)newDataRate<<" and TP = "<<(unsigned)newTxPower<<" dBm");
 
-        status->m_reply.frameHeader.AddLinkAdrReq(newDataRate,
-                                                  GetTxPowerIndex(newTxPower),
-                                                  enabledChannels,
-                                                  rep);
-        status->m_reply.frameHeader.SetAsDownlink();
-        status->m_reply.macHeader.SetMType(LoraMacHeader::UNCONFIRMED_DATA_DOWN);
+          status->m_reply.frameHeader.AddLinkAdrReq(newDataRate,
+                                                    GetTxPowerIndex(newTxPower),
+                                                    enabledChannels,
+                                                    rep);
+          status->m_reply.frameHeader.SetAsDownlink();
+          status->m_reply.macHeader.SetMType(LoraMacHeader::UNCONFIRMED_DATA_DOWN);
+        }
+        else
+        {
+          NS_LOG_ERROR("Skipped request");
+        }
       }
     }
     else
@@ -276,7 +289,7 @@ namespace ns3 {
       sum += m_SNR;
     }
 
-    return m_SNR / historyRange;
+    return sum / historyRange;
   }
 
   int AdrComponent::GetTxPowerIndex (int txPower)
